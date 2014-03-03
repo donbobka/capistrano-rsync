@@ -5,23 +5,28 @@ require File.expand_path("../rsync/version", __FILE__)
 # private API and internals of Capistrano::Rsync. If you think something should
 # be public for extending and hooking, please let me know!
 
-set :rsync_options, []
-set :rsync_copy, "rsync --archive --acls --xattrs"
-
-# Stage is used on your local machine for rsyncing from.
-set :rsync_stage, "tmp/deploy"
-
-# Cache is used on the server to copy files to from to the release directory.
-# Saves you rsyncing your whole app folder each time.  If you nil rsync_cache,
-# Capistrano::Rsync will sync straight to the release path.
-set :rsync_cache, "shared/deploy"
-set :rsync_src_path, ""
-set :rsync_dest_path, ""
-
 rsync_cache = lambda do
   cache = fetch(:rsync_cache)
   cache = deploy_to + "/" + cache if cache && cache !~ /^\//
   cache
+end
+
+# Use cap3's load:defaults to set default vars so that they can be overridden.
+namespace :load do
+  task :defaults do
+    set :rsync_options, []
+    set :rsync_copy, "rsync --archive --acls --xattrs"
+
+    # Stage is used on your local machine for rsyncing from.
+    set :rsync_stage, "tmp/deploy"
+
+    # Cache is used on the server to copy files to from to the release directory.
+    # Saves you rsyncing your whole app folder each time.  If you nil rsync_cache,
+    # Capistrano::Rsync will sync straight to the release path.
+    set :rsync_cache, "shared/deploy"
+    set :rsync_src_path, ""
+    set :rsync_dest_path, ""
+  end
 end
 
 Rake::Task["deploy:check"].enhance ["rsync:hook_scm"]
