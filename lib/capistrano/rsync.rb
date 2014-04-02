@@ -37,12 +37,14 @@ task :rsync => %w[rsync:stage] do
   roles(:all).each do |role|
     user = role.user + "@" if !role.user.nil?
 
-    rsync = %w[rsync]
-    rsync.concat fetch(:rsync_options)
-    rsync << fetch(:rsync_stage) + fetch(:rsync_src_path, '/')
-    rsync << "#{user}#{role.hostname}:#{rsync_cache.call || release_path}#{fetch(:rsync_dest_path)}"
+    rsync_args = []
+    rsync_args.concat fetch(:rsync_options)
+    rsync_args << fetch(:rsync_stage) + fetch(:rsync_src_path, '/')
+    rsync_args << "#{user}#{role.hostname}:#{rsync_cache.call || release_path}#{fetch(:rsync_dest_path)}"
 
-    Kernel.system *rsync
+    run_locally do
+      execute :rsync, *rsync_args
+    end
   end
 end
 
@@ -64,20 +66,18 @@ namespace :rsync do
   task :create_stage do
     next if File.directory?(fetch(:rsync_stage))
 
-    clone = %W[git clone]
-    clone << fetch(:repo_url, ".")
-    clone << fetch(:rsync_stage)
-    Kernel.system *clone
+    run_locally do
+      execute :git, 'clone', fetch(:repo_url, "."), fetch(:rsync_stage)
+    end
   end
 
   desc "Stage the repository in a local directory."
   task :stage => %w[create_stage] do
     Dir.chdir fetch(:rsync_stage) do
-      update = %W[git fetch --quiet --all --prune]
-      Kernel.system *update
-
-      checkout = %W[git reset --hard origin/#{fetch(:branch)}]
-      Kernel.system *checkout
+      run_locally do
+        execute :git, 'fetch --quiet --all --prune'
+        execute :git, "reset --hard origin/#{fetch(:branch)}"
+      end
     end
   end
 
