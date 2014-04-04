@@ -36,6 +36,13 @@ Require it at the top of your `Capfile` (or `config/deploy.rb`):
 require "capistrano/rsync"
 ```
 
+Set the `scm` to use `rsync`. This is to prevent the default deploy tasks from
+being run. This will basically set the SCM as a no-op. This is a workaround
+until capistrano/capistrano#929 is resolved.
+```ruby
+set :scm, :rsync
+```
+
 Set some `rsync_options` to your liking:
 ```ruby
 set :rsync_options, %w[--recursive --delete --delete-excluded --exclude .git*]
