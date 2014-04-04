@@ -73,8 +73,8 @@ namespace :rsync do
 
   desc "Stage the repository in a local directory."
   task :stage => %w[create_stage] do
-    Dir.chdir fetch(:rsync_stage) do
-      run_locally do
+    run_locally do
+      within fetch(:rsync_stage) do
         execute :git, 'fetch --quiet --all --prune'
         execute :git, "reset --hard origin/#{fetch(:branch)}"
       end
