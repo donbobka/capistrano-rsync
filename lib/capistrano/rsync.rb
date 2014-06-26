@@ -15,6 +15,8 @@ set :rsync_stage, "tmp/deploy"
 # Saves you rsyncing your whole app folder each time.  If you nil rsync_cache,
 # Capistrano::Rsync will sync straight to the release path.
 set :rsync_cache, "shared/deploy"
+set :rsync_src_path, ""
+set :rsync_dest_path, ""
 
 rsync_cache = lambda do
   cache = fetch(:rsync_cache)
@@ -32,8 +34,8 @@ task :rsync => %w[rsync:stage] do
 
     rsync = %w[rsync]
     rsync.concat fetch(:rsync_options)
-    rsync << fetch(:rsync_stage) + "/"
-    rsync << "#{user}#{role.hostname}:#{rsync_cache.call || release_path}"
+    rsync << fetch(:rsync_stage) + fetch(:rsync_src_path, '/')
+    rsync << "#{user}#{role.hostname}:#{rsync_cache.call || release_path}#{fetch(:rsync_dest_path)}"
 
     Kernel.system *rsync
   end
@@ -42,11 +44,11 @@ end
 namespace :rsync do
   task :hook_scm do
     Rake::Task.define_task("#{scm}:check") do
-      invoke "rsync:check" 
+      invoke "rsync:check"
     end
 
     Rake::Task.define_task("#{scm}:create_release") do
-      invoke "rsync:release" 
+      invoke "rsync:release"
     end
   end
 
