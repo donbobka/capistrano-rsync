@@ -89,3 +89,18 @@ namespace :rsync do
   # Plus was part of the public API in Capistrano::Rsync <= v0.2.1.
   task :create_release => %w[release]
 end
+
+
+namespace :deploy do
+  namespace :check do
+    task :directories_for_rsync do
+      on release_roles :all do
+        execute :mkdir, '-pv', File.join(fetch(:deploy_to), fetch(:rsync_cache))
+      end
+    end
+  end
+end
+
+after 'deploy:check:directories', 'deploy:check:directories_for_rsync'
+
+
