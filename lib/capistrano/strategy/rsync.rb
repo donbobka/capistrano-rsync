@@ -24,8 +24,8 @@ namespace :load do
     # Saves you rsyncing your whole app folder each time.  If you nil rsync_cache,
     # Capistrano::Rsync will sync straight to the release path.
     set :rsync_cache, "shared/deploy"
-    set :rsync_src_path, ""
-    set :rsync_dest_path, ""
+    set :rsync_src_path, nil
+    set :rsync_dest_path, nil
   end
 end
 
@@ -37,10 +37,13 @@ task :rsync => %w[rsync:stage] do
   release_roles(:all).each do |role|
     user = role.user + "@" if !role.user.nil?
 
+    src_path = [fetch(:rsync_stage), fetch(:rsync_src_path), ''].compact
+    dest_path = [rsync_cache.call || release_path, fetch(:rsync_dest_path)].compact
+
     rsync_args = []
     rsync_args.concat fetch(:rsync_options)
-    rsync_args << fetch(:rsync_stage) + fetch(:rsync_src_path, '/')
-    rsync_args << "#{user}#{role.hostname}:#{rsync_cache.call || release_path}#{fetch(:rsync_dest_path)}"
+    rsync_args << File.join(*src_path)
+    rsync_args << "#{user}#{role.hostname}:#{File.join(*dest_path)}"
 
     run_locally do
       execute :rsync, *rsync_args
