@@ -82,7 +82,7 @@ namespace :rsync do
 
         execute :git, :fetch, '--quiet --all --prune'
         execute :git, :clean, '-f'
-        execute :git, :checkout, ref
+        execute :git, :checkout, '-f', ref
       end
     end
   end
